@@ -1,98 +1,161 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, TextInput, Button, Text, StyleSheet, ScrollView } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
-
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+interface AtividadePrincipal {
+  code: string;
+  text: string;
 }
 
+interface Qsa {
+  nome: string;
+  qual: string;
+}
+
+interface CnpjData {
+  abertura: string;
+  situacao: string;
+  tipo: string;
+  nome: string;
+  fantasia: string;
+  porte: string;
+  natureza_juridica: string;
+  atividade_principal: AtividadePrincipal[];
+  qsa: Qsa[];
+  logradouro: string;
+  numero: string;
+  municipio: string;
+  bairro: string;
+  uf: string;
+  cep: string;
+  data_situacao: string;
+}
+
+const fetchCnpjData = async (cnpj: string): Promise<CnpjData> => {
+  const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
+
+  if (!response.ok) {
+    console.log(cnpj);
+    throw new Error('Erro na requisição')
+  }
+
+  const data = await response.json();
+
+  return data;
+};
+
+const CnpjSearchScreen = () => {
+  const [cnpj, setCnpj] = useState('');
+  const [data, setData] = useState<CnpjData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSearch = async () => {
+    try {
+      setError(null);
+      setData(null);
+      const result = await fetchCnpjData(cnpj);
+      setData(result);
+    } catch (err) {
+      setError('Erro ao buscar CNPJ');
+      setData(null);
+    }
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Digite o CNPJ"
+        value={cnpj}
+        onChangeText={setCnpj}
+        keyboardType="numeric"
+      />
+      <Button title="Buscar CNPJ" onPress={handleSearch} />
+
+      {error && <Text style={styles.error}>{error}</Text>}
+
+      {data && (
+        <View style={styles.result}>
+          <Text style={styles.label}>Nome:</Text>
+          <Text>{data.nome}</Text>
+
+          <Text style={styles.label}>Fantasia:</Text>
+          <Text>{data.fantasia}</Text>
+
+          <Text style={styles.label}>Abertura:</Text>
+          <Text>{data.abertura}</Text>
+
+          <Text style={styles.label}>Situação:</Text>
+          <Text>{data.situacao}</Text>
+
+          <Text style={styles.label}>Tipo:</Text>
+          <Text>{data.tipo}</Text>
+
+          <Text style={styles.label}>Porte:</Text>
+          <Text>{data.porte}</Text>
+
+          <Text style={styles.label}>Natureza Jurídica:</Text>
+          <Text>{data.natureza_juridica}</Text>
+
+          <Text style={styles.label}>Logradouro:</Text>
+          <Text>{data.logradouro}, {data.numero}</Text>
+
+          <Text style={styles.label}>Bairro:</Text>
+          <Text>{data.bairro}</Text>
+
+          <Text style={styles.label}>Município:</Text>
+          <Text>{data.municipio}</Text>
+
+          <Text style={styles.label}>UF:</Text>
+          <Text>{data.uf}</Text>
+
+          <Text style={styles.label}>CEP:</Text>
+          <Text>{data.cep}</Text>
+
+          <Text style={styles.label}>Data Situação:</Text>
+          <Text>{data.data_situacao}</Text>
+
+          <Text style={[styles.label, { marginTop: 15 }]}>Atividades Principais:</Text>
+          {data.atividade_principal.map((atividade, index) => (
+            <View key={index} style={styles.listItem}>
+              <Text>{atividade.code} - {atividade.text}</Text>
+            </View>
+          ))}
+
+          <Text style={[styles.label, { marginTop: 15 }]}>Sócios (QSA):</Text>
+          {data.qsa.map((socio, index) => (
+            <View key={index} style={styles.listItem}>
+              <Text>{socio.nome} - {socio.qual}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </ScrollView>
+  );
+};
+
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { padding: 20 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  result: {
+    marginTop: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  label: {
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  listItem: {
+    paddingLeft: 10,
+  },
+  error: {
+    color: 'red',
+    marginTop: 10,
   },
 });
+
+export default CnpjSearchScreen;
