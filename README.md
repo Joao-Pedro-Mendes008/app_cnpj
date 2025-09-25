@@ -32,11 +32,11 @@ Uma aplicação simples em **React Native** utilizando **Expo** que permite cons
 1. Clone o repositório:
 
 - bash:
-- git clone <URL_DO_REPOSITORIO>
-- cd nome-do-repositorio   
+- `git clone <URL_DO_REPOSITORIO>`
+- `cd nome-do-repositorio`
 
 ---
 
 ## Rode no bash
-- npm i
-- npm run start:all
+- `npm i`
+- `npm run start:all`
