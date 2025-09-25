@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView } from 'react-native';
 
-interface AtividadePrincipal {
+type AtividadePrincipal = {
   code: string;
   text: string;
-}
+};
 
-interface Qsa {
+type Qsa = {
   nome: string;
   qual: string;
-}
+};
 
-interface CnpjData {
+type CnpjData = {
   abertura: string;
   situacao: string;
   tipo: string;
@@ -28,35 +28,38 @@ interface CnpjData {
   uf: string;
   cep: string;
   data_situacao: string;
-}
-
-const fetchCnpjData = async (cnpj: string): Promise<CnpjData> => {
-  const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
-
-  if (!response.ok) {
-    console.log(cnpj);
-    throw new Error('Erro na requisição')
-  }
-
-  const data = await response.json();
-
-  return data;
 };
 
-const CnpjSearchScreen = () => {
+const App: React.FC = () => {
   const [cnpj, setCnpj] = useState('');
   const [data, setData] = useState<CnpjData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = async () => {
+  const cleanCnpj = (input: string) => input.replace(/\D/g, '');
+
+  const handleFetch = async () => {
+    const formattedCnpj = cleanCnpj(cnpj);
+    if (formattedCnpj.length !== 14) {
+      setError('Digite um CNPJ válido com 14 números');
+      setData(null);
+      return;
+    }
+
     try {
+      setLoading(true);
       setError(null);
-      setData(null);
-      const result = await fetchCnpjData(cnpj);
-      setData(result);
+      const response = await fetch(`http://localhost:4000/cnpj/${formattedCnpj}`);
+      if (!response.ok) {
+        throw new Error('Erro na requisição');
+      }
+      const json: CnpjData = await response.json();
+      setData(json);
     } catch (err) {
-      setError('Erro ao buscar CNPJ');
+      setError('Erro ao buscar dados');
       setData(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,69 +67,33 @@ const CnpjSearchScreen = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Digite o CNPJ"
         value={cnpj}
         onChangeText={setCnpj}
+        placeholder="Digite o CNPJ"
         keyboardType="numeric"
+        maxLength={18} // opcional, para cnpj formatado
       />
-      <Button title="Buscar CNPJ" onPress={handleSearch} />
+      <Button title={loading ? 'Carregando...' : 'Buscar'} onPress={handleFetch} disabled={loading} />
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {data && (
         <View style={styles.result}>
-          <Text style={styles.label}>Nome:</Text>
-          <Text>{data.nome}</Text>
-
-          <Text style={styles.label}>Fantasia:</Text>
-          <Text>{data.fantasia}</Text>
-
-          <Text style={styles.label}>Abertura:</Text>
-          <Text>{data.abertura}</Text>
-
-          <Text style={styles.label}>Situação:</Text>
-          <Text>{data.situacao}</Text>
-
-          <Text style={styles.label}>Tipo:</Text>
-          <Text>{data.tipo}</Text>
-
-          <Text style={styles.label}>Porte:</Text>
-          <Text>{data.porte}</Text>
-
-          <Text style={styles.label}>Natureza Jurídica:</Text>
-          <Text>{data.natureza_juridica}</Text>
-
-          <Text style={styles.label}>Logradouro:</Text>
-          <Text>{data.logradouro}, {data.numero}</Text>
-
-          <Text style={styles.label}>Bairro:</Text>
-          <Text>{data.bairro}</Text>
-
-          <Text style={styles.label}>Município:</Text>
-          <Text>{data.municipio}</Text>
-
-          <Text style={styles.label}>UF:</Text>
-          <Text>{data.uf}</Text>
-
-          <Text style={styles.label}>CEP:</Text>
-          <Text>{data.cep}</Text>
-
-          <Text style={styles.label}>Data Situação:</Text>
-          <Text>{data.data_situacao}</Text>
-
-          <Text style={[styles.label, { marginTop: 15 }]}>Atividades Principais:</Text>
-          {data.atividade_principal.map((atividade, index) => (
-            <View key={index} style={styles.listItem}>
-              <Text>{atividade.code} - {atividade.text}</Text>
-            </View>
-          ))}
-
-          <Text style={[styles.label, { marginTop: 15 }]}>Sócios (QSA):</Text>
-          {data.qsa.map((socio, index) => (
-            <View key={index} style={styles.listItem}>
-              <Text>{socio.nome} - {socio.qual}</Text>
-            </View>
-          ))}
+          <Text style={styles.label}>Nome: <Text style={styles.value}>{data.nome}</Text></Text>
+          <Text style={styles.label}>Fantasia: <Text style={styles.value}>{data.fantasia}</Text></Text>
+          <Text style={styles.label}>Abertura: <Text style={styles.value}>{data.abertura}</Text></Text>
+          <Text style={styles.label}>Situação: <Text style={styles.value}>{data.situacao}</Text></Text>
+          <Text style={styles.label}>Tipo: <Text style={styles.value}>{data.tipo}</Text></Text>
+          <Text style={styles.label}>Porte: <Text style={styles.value}>{data.porte}</Text></Text>
+          <Text style={styles.label}>Natureza Jurídica: <Text style={styles.value}>{data.natureza_juridica}</Text></Text>
+          <Text style={styles.label}>
+            Atividade Principal: <Text style={styles.value}>{data.atividade_principal?.[0]?.text}</Text>
+          </Text>
+          <Text style={styles.label}>
+            Endereço: <Text style={styles.value}>{`${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}`}</Text>
+          </Text>
+          <Text style={styles.label}>CEP: <Text style={styles.value}>{data.cep}</Text></Text>
+          <Text style={styles.label}>Data Situação: <Text style={styles.value}>{data.data_situacao}</Text></Text>
         </View>
       )}
     </ScrollView>
@@ -134,28 +101,30 @@ const CnpjSearchScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
+  container: {
+    padding: 20,
+  },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
+    borderColor: '#999',
+    borderRadius: 5,
     padding: 10,
     marginBottom: 10,
+  },
+  error: {
+    color: 'red',
+    marginVertical: 10,
   },
   result: {
     marginTop: 20,
   },
   label: {
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: 8,
   },
-  listItem: {
-    paddingLeft: 10,
-  },
-  error: {
-    color: 'red',
-    marginTop: 10,
+  value: {
+    fontWeight: 'normal',
   },
 });
 
-export default CnpjSearchScreen;
+export default App;
