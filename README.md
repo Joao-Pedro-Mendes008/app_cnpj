@@ -1,6 +1,6 @@
 # ShowCNPJ - Consulta de CNPJs em React Native (Expo)
 
-Uma aplicação simples em **React Native** utilizando **Expo** que permite consultar dados de CNPJs através de uma API local. Possui splash screen inicial, validação de CNPJ e exibe as informações detalhadas da empresa.
+Uma aplicação simples em **React Native** utilizando **Expo** que permite consultar dados de CNPJs através de uma API local que busca dados em uma API pública. Possui splash screen inicial, validação de CNPJ e exibe as informações detalhadas da empresa.
 
 ---
 
