@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView } from 'react-native';
+import SplashScreen from '@/components/SplashScreen';
+import React, { useEffect, useState } from 'react';
+import { Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type AtividadePrincipal = {
   code: string;
@@ -30,11 +31,21 @@ type CnpjData = {
   data_situacao: string;
 };
 
-const App: React.FC = () => {
+const ShowCNPJ: React.FC = () => {
   const [cnpj, setCnpj] = useState('');
   const [data, setData] = useState<CnpjData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <SplashScreen message="Minha Splash Screen" />;
+  }
 
   const cleanCnpj = (input: string) => input.replace(/\D/g, '');
 
@@ -127,4 +138,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default ShowCNPJ;
